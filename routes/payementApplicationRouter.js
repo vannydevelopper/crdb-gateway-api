@@ -3,6 +3,7 @@ const payementApplicationController = require("../controller/payementApplication
 
 const payementApplicationRouter = express.Router();
 
-payementApplicationRouter.post("/applications", payementApplicationController.checkApplications);
+payementApplicationRouter.post("/applications/verifications", payementApplicationController.checkApplicationsVerification);
+payementApplicationRouter.post("/applications/confirmations", payementApplicationController.checkApplicationsConfirmation);
 
 module.exports = payementApplicationRouter;

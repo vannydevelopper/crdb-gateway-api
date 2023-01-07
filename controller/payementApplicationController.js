@@ -2,51 +2,78 @@ const { query } = require("../functions/db");
 const axios = require("axios").default
 const payementApplicationModel = require('../model/payementApplicationModel')
 
-const checkApplications = async (req, res) => {
+const checkApplicationsVerification = async (req, res) => {
         try {
-                const {token, paymentReference, checksum, institutionID, transactionRef} = req.body
+                const { token, paymentReference, checksum, institutionID } = req.body
                 const applications = (await payementApplicationModel.getApplication(token))[0]
-                const url_verification = applications.CHECK_URL
-                const url_confirmation = applications.CONFIRMATION_URL
+                if (applications) {
+                        const url_verification = applications.CHECK_URL
+                        const codeVerifier = await axios.post(url_verification, {
+                                paymentReference: paymentReference,
+                                token: token,
+                                checksum: checksum,
+                                institutionID: institutionID
+                        })
+                        res.status(200).json({
+                                data: JSON.parse(JSON.stringify(codeVerifier.data))
+                        })
 
-                if(applications){
-                        const codeVerifier = await axios.post(url_verification,{
-                                paymentReference:paymentReference,
-                                token:token,
-                                checksum:checksum,
-                                institutionID:institutionID
-                        }) 
-                        if(codeVerifier){
-                                const codeReponse = codeVerifier.data
-                                const payementConfirmation = await axios.post(url_confirmation,{
-                                        payerName:codeReponse.data.payerName,
-                                        amount:codeReponse.data.amount,
-                                        amountType:codeReponse.data.amountType,
-                                        paymentReference:codeReponse.data.paymentReference,
-                                        currency:codeReponse.data.currency,
-                                        paymentType:codeReponse.data.paymentType,
-                                        paymentDesc:codeReponse.data.paymentDesc,
-                                        payerID:codeReponse.data.payerID,
-                                        transactionRef:"D1425A",
-                                        transactionChannel:"D1425A",
-                                        token:token,
-                                        checksum:checksum,
-                                        institutionID:institutionID
-                                })  
-                                console.log(payementConfirmation)  
-                        }else{
-                                res.status(404).send({message:"La verification de code de referance a echoue"})
-                        }
-                }else{
-                        res.status(201).send({message:"Le token n'esxiste pas"})
+                } else {
+                        res.status(201).send({ message: "Le token n'existe pas" })
                 }
-                res.status(200).json(applications)
         } catch (error) {
-                  console.log(error);
-                  res.status(500).send("Server error");
+                console.log(error);
+                res.status(500).send("Server error");
         }
 };
 
-module.exports={
-        checkApplications
+const checkApplicationsConfirmation = async (req, res) => {
+        try {
+                const { payerName,
+                        amount,
+                        amountType,
+                        paymentReference,
+                        currency,
+                        paymentType,
+                        paymentDesc,
+                        payerID,
+                        transactionRef,
+                        transactionChannel,
+                        token,
+                        checksum,
+                        institutionID } = req.body
+                const applications = (await payementApplicationModel.getApplication(token))[0]
+                if (applications) {
+                        const url_confirmation = applications.CONFIRMATION_URL
+                        const payementConfirmation = await axios.post(url_confirmation, {
+                                payerName:payerName,
+                                amount:amount,
+                                amountType:amountType,
+                                paymentReference:paymentReference,
+                                currency:currency,
+                                paymentType:paymentType,
+                                paymentDesc:paymentDesc,
+                                payerID: payerID,
+                                transactionRef:transactionRef,
+                                transactionChannel:transactionChannel,
+                                token: token,
+                                checksum: checksum,
+                                institutionID: institutionID
+                        })
+                        res.status(200).json({
+                                data: JSON.parse(JSON.stringify(payementConfirmation.data))
+                        })
+
+                } else {
+                        res.status(201).send({ message: "Le token n'existe pas" })
+                }
+        } catch (error) {
+                console.log(error);
+                res.status(500).send("Server error");
+        }
+};
+
+module.exports = {
+        checkApplicationsVerification,
+        checkApplicationsConfirmation
 }
