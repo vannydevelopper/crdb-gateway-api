@@ -6,8 +6,11 @@ const checkApplications = async (req, res) => {
         try {
                 const {token, paymentReference, checksum, institutionID, transactionRef} = req.body
                 const applications = (await payementApplicationModel.getApplication(token))[0]
+                const url_verification = applications.CHECK_URL
+                const url_confirmation = applications.CONFIRMATION_URL
+
                 if(applications){
-                        const codeVerifier = await axios.post('http://localhost:8000/payements/crdb/verifications',{
+                        const codeVerifier = await axios.post(url_verification,{
                                 paymentReference:paymentReference,
                                 token:token,
                                 checksum:checksum,
@@ -15,7 +18,7 @@ const checkApplications = async (req, res) => {
                         }) 
                         const codeReponse = codeVerifier.data
                         if(codeReponse){
-                                const payementConfirmation = await axios.post('http://localhost:8000/payements/crdb/confirmations',{
+                                const payementConfirmation = await axios.post(url_confirmation,{
                                         payerName:codeReponse.data.payerName,
                                         amount:codeReponse.data.amount,
                                         amountType:codeReponse.data.amountType,
