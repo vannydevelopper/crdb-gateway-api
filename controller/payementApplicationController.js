@@ -14,7 +14,7 @@ const checkApplicationsVerification = async (req, res) => {
                                 checksum: checksum,
                                 institutionID: institutionID
                         })
-                        res.status(codeVerifier.data.status).json({
+                        res.status(codeVerifier.status).json({
                                 data: JSON.parse(JSON.stringify(codeVerifier.data))
                         })
 
@@ -60,7 +60,7 @@ const checkApplicationsConfirmation = async (req, res) => {
                                 checksum: checksum,
                                 institutionID: institutionID
                         })
-                        res.status(payementConfirmation.data.status).json({
+                        res.status(payementConfirmation.status).json({
                                 data: JSON.parse(JSON.stringify(payementConfirmation.data))
                         })
 
