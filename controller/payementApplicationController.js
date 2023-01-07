@@ -16,10 +16,8 @@ const checkApplications = async (req, res) => {
                                 checksum:checksum,
                                 institutionID:institutionID
                         }) 
-                        console.log(codeVerifier)
                         if(codeVerifier){
                                 const codeReponse = codeVerifier.data
-                                console.log(codeReponse.data.payerName)
                                 const payementConfirmation = await axios.post(url_confirmation,{
                                         payerName:codeReponse.data.payerName,
                                         amount:codeReponse.data.amount,
