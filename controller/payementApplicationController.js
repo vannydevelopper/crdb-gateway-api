@@ -14,7 +14,7 @@ const checkApplicationsVerification = async (req, res) => {
                                 checksum: checksum,
                                 institutionID: institutionID
                         })
-                        res.status(200).json({
+                        res.status(codeVerifier.data.status).json({
                                 data: JSON.parse(JSON.stringify(codeVerifier.data))
                         })
 
@@ -46,21 +46,21 @@ const checkApplicationsConfirmation = async (req, res) => {
                 if (applications) {
                         const url_confirmation = applications.CONFIRMATION_URL
                         const payementConfirmation = await axios.post(url_confirmation, {
-                                payerName:payerName,
-                                amount:amount,
-                                amountType:amountType,
-                                paymentReference:paymentReference,
-                                currency:currency,
-                                paymentType:paymentType,
-                                paymentDesc:paymentDesc,
+                                payerName: payerName,
+                                amount: amount,
+                                amountType: amountType,
+                                paymentReference: paymentReference,
+                                currency: currency,
+                                paymentType: paymentType,
+                                paymentDesc: paymentDesc,
                                 payerID: payerID,
-                                transactionRef:transactionRef,
-                                transactionChannel:transactionChannel,
+                                transactionRef: transactionRef,
+                                transactionChannel: transactionChannel,
                                 token: token,
                                 checksum: checksum,
                                 institutionID: institutionID
                         })
-                        res.status(200).json({
+                        res.status(payementConfirmation.data.status).json({
                                 data: JSON.parse(JSON.stringify(payementConfirmation.data))
                         })
 
