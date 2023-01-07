@@ -16,8 +16,9 @@ const checkApplications = async (req, res) => {
                                 checksum:checksum,
                                 institutionID:institutionID
                         }) 
-                        const codeReponse = codeVerifier.data
-                        if(codeReponse){
+                        console.log(codeVerifier)
+                        if(codeVerifier){
+                                const codeReponse = codeVerifier.data
                                 const payementConfirmation = await axios.post(url_confirmation,{
                                         payerName:codeReponse.data.payerName,
                                         amount:codeReponse.data.amount,
@@ -35,7 +36,7 @@ const checkApplications = async (req, res) => {
                                 })  
                                 console.log(payementConfirmation)  
                         }else{
-                                res.status(404).send("Server error")
+                                res.status(404).send({message:"La verification de code de referance am echoue"})
                         }
                 }else{
                         res.status(201).send({message:"Le token n'esxiste pas"})
