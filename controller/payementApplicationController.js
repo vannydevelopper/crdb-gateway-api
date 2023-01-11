@@ -125,7 +125,7 @@ const checkApplicationsConfirmation = async (req, res) => {
                         const historiquePayement = (await payementApplicationModel.findByPayementCodeReference(paymentReference))[0]
                         if (historiquePayement) {
                                 if (historiquePayement.STATUT_ID == 1) {
-                                        return res.status(207).json({ message: "TransacSon reference number already paid post method" })
+                                           return res.status(207).json({ message: "TransacSon reference number already paid post method" })
                                 }
                                 var shasum = crypto.createHash('sha1')
                                 const systemChecksum = shasum.update(`${token}${md5(historiquePayement.paymentReference)}`).digest('hex')
