@@ -55,10 +55,10 @@ const checkApplicationsVerification = async (req, res) => {
                         })
                 }
 
-                const systemToken = "2A21197A73E787BDD97A77725368A"
-                if (token == systemToken) {
-                        const historiquePayement = (await payementApplicationModel.findByPayementTnxid(paymentReference))[0]
-                        if (historiquePayement) {
+                const historiquePayement = (await payementApplicationModel.findByPayementTnxid(paymentReference))[0]
+                if (historiquePayement) {
+                        const systemToken = historiquePayement.token
+                        if (token == systemToken) {
                                 var shasum = crypto.createHash('sha1')
                                 const systemChecksum = shasum.update(`${token}${md5(historiquePayement.paymentReference)}`).digest('hex')
                                 console.log(systemChecksum)
@@ -84,15 +84,16 @@ const checkApplicationsVerification = async (req, res) => {
                                         })
                                 }
                         } else {
-                                res.status(204).send({
-                                        message: "Invalid payment reference number"
+                                res.status(201).json({
+                                        message: "Invalid Token"
                                 })
                         }
                 } else {
-                        res.status(201).json({
-                                message: "Invalid Token"
+                        res.status(204).send({
+                                message: "Invalid payment reference number"
                         })
                 }
+
 
         } catch (error) {
                 console.log(error);
@@ -121,48 +122,68 @@ const checkApplicationsConfirmation = async (req, res) => {
 
                 if (applications) {
                         const url_confirmation = applications.CONFIRMATION_URL
-                        const payementConfirmation = await axios.post(url_confirmation, {
-                                payerName: payerName,
-                                amount: amount,
-                                amountType: amountType,
-                                paymentReference: paymentReference,
-                                currency: currency,
-                                paymentType: paymentType,
-                                paymentDesc: paymentDesc,
-                                payerID: payerID,
-                                transactionRef: transactionRef,
-                                transactionChannel: transactionChannel,
-                                token: token,
-                                checksum: checksum,
-                                institutionID: institutionID
-                        })
+                        const historiquePayement = (await payementApplicationModel.findByPayementCodeReference(paymentReference))[0]
+                        if (historiquePayement) {
+                                if (historiquePayement.STATUT_ID == 1) {
+                                        return res.status(207).json({ message: "TransacSon reference number already paid post method" })
+                                }
+                                var shasum = crypto.createHash('sha1')
+                                const systemChecksum = shasum.update(`${token}${md5(historiquePayement.paymentReference)}`).digest('hex')
+                                console.log(systemChecksum)
+                                if (checksum == systemChecksum) {
+                                        const payementConfirmation = await axios.post(url_confirmation, {
+                                                payerName: payerName,
+                                                amount: amount,
+                                                amountType: amountType,
+                                                paymentReference: paymentReference,
+                                                currency: currency,
+                                                paymentType: paymentType,
+                                                paymentDesc: paymentDesc,
+                                                payerID: payerID,
+                                                transactionRef: transactionRef,
+                                                transactionChannel: transactionChannel,
+                                                token: token,
+                                                checksum: checksum,
+                                                institutionID: institutionID
+                                        })
+                                        await query("UPDATE crdb_verification_data SET STATUT_ID = 1 WHERE ID_VERIFICATION_DATA=?", [historiquePayement.ID_VERIFICATION_DATA]);
 
-                        if(payementConfirmation){
-                                const { insertId } = await payementApplicationModel.createConfimationPayement(
-                                        payerName,
-                                        amount,
-                                        amountType,
-                                        currency,
-                                        paymentReference,
-                                        paymentType,
-                                        payerMobile,
-                                        paymentDesc,
-                                        payerID,
-                                        transactionRef,
-                                        transactionChannel,
-                                        transactionDate,
-                                        token,
-                                        checksum,
-                                        institutionID,
-                                        payementConfirmation.data.data.receipt
-                                )
+                                        if (payementConfirmation) {
+                                                const { insertId } = await payementApplicationModel.createConfimationPayement(
+                                                        payerName,
+                                                        amount,
+                                                        amountType,
+                                                        currency,
+                                                        paymentReference,
+                                                        paymentType,
+                                                        payerMobile,
+                                                        paymentDesc,
+                                                        payerID,
+                                                        transactionRef,
+                                                        transactionChannel,
+                                                        transactionDate,
+                                                        token,
+                                                        checksum,
+                                                        institutionID,
+                                                        payementConfirmation.data.data.receipt
+                                                )
+                                        }
+                                        res.status(payementConfirmation.status).json({
+                                                data: JSON.parse(JSON.stringify(payementConfirmation.data))
+                                        })
+
+                                } else {
+                                        res.status(202).json({
+                                                message: "Invalid checksum"
+                                        })
+                                }
+                        } else {
+                                res.status(204).send({
+                                        message: "Invalid payment reference number"
+                                })
                         }
-                        res.status(payementConfirmation.status).json({
-                                data: JSON.parse(JSON.stringify(payementConfirmation.data))
-                        })
-
                 } else {
-                        res.status(201).send({ message: "Le token n'existe pas" })
+                        res.status(201).send({ message: "Invalid token" })
                 }
         } catch (error) {
                 console.log(error);
@@ -203,22 +224,17 @@ const checkApplications = async (req, res) => {
                                 result: erros
                         })
                 }
-                const paymentReference = `${moment().get("hours")}${moment().get("minutes")}${moment().get("seconds")}${moment().get("hours")}`
-                const systemtoken = "2A21197A73E787BDD97A77725368A"
                 const amountTypeInitial = "FIXED"
                 const currencyInitial = "TZS"
 
-                var shasum = crypto.createHash('sha1')
-                const systemChecksum = shasum.update(`${systemtoken}${md5(paymentReference)}`).digest('hex')
-                console.log(systemChecksum)
-
-                if (token == systemtoken) {
+                if (token) {
                         const applications = (await payementApplicationModel.getApplication(token))[0]
+                        const paymentReference = `${moment().get("h")}${applications.ID_CRDB_USERS}${moment().get("M")}${moment().get("s")}`
+
                         if (applications) {
                                 const { insertId } = await payementApplicationModel.createOne(
                                         paymentReference,
                                         token,
-                                        systemChecksum,
                                         institutionID,
                                         payerName,
                                         amount,
@@ -231,11 +247,12 @@ const checkApplications = async (req, res) => {
                                 );
                                 res.status(200).send({
                                         success: true,
-                                        message: "l'enregistrement est faites avec succes"
+                                        message: "La referance du paiement a ete generer avec succes",
+                                        paymentReference,
                                 })
 
                         } else {
-                                res.status(204).send({
+                                res.status(404).send({
                                         message: "Invalid application"
                                 })
                         }
