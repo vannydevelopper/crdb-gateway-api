@@ -118,48 +118,48 @@ const checkApplicationsConfirmation = async (req, res) => {
                         checksum,
                         institutionID } = req.body
                 const applications = (await payementApplicationModel.getApplication(token))[0]
-                const codeReceipt = `${moment().get("hours")}${moment().get("minutes")}${moment().get("seconds")}`
 
                 if (applications) {
                         const url_confirmation = applications.CONFIRMATION_URL
-                        // const payementConfirmation = await axios.post(url_confirmation, {
-                        //         payerName: payerName,
-                        //         amount: amount,
-                        //         amountType: amountType,
-                        //         paymentReference: paymentReference,
-                        //         currency: currency,
-                        //         paymentType: paymentType,
-                        //         paymentDesc: paymentDesc,
-                        //         payerID: payerID,
-                        //         transactionRef: transactionRef,
-                        //         transactionChannel: transactionChannel,
-                        //         token: token,
-                        //         checksum: checksum,
-                        //         institutionID: institutionID
-                        // })
-                        // res.status(payementConfirmation.status).json({
-                        //         data: JSON.parse(JSON.stringify(payementConfirmation.data))
-                        // })
+                        const payementConfirmation = await axios.post(url_confirmation, {
+                                payerName: payerName,
+                                amount: amount,
+                                amountType: amountType,
+                                paymentReference: paymentReference,
+                                currency: currency,
+                                paymentType: paymentType,
+                                paymentDesc: paymentDesc,
+                                payerID: payerID,
+                                transactionRef: transactionRef,
+                                transactionChannel: transactionChannel,
+                                token: token,
+                                checksum: checksum,
+                                institutionID: institutionID
+                        })
 
-                        const { insertId } = await payementApplicationModel.createConfimationPayement(
-                                payerName,
-                                amount,
-                                amountType,
-                                currency,
-                                paymentReference,
-                                paymentType,
-                                payerMobile,
-                                paymentDesc,
-                                payerID,
-                                transactionRef,
-                                transactionChannel,
-                                transactionDate,
-                                token,
-                                checksum,
-                                institutionID,
-                                codeReceipt
-                        )
-                        res.status(200).send({message:"l'enregistrement est faite avec succes"})
+                        if(payementConfirmation){
+                                const { insertId } = await payementApplicationModel.createConfimationPayement(
+                                        payerName,
+                                        amount,
+                                        amountType,
+                                        currency,
+                                        paymentReference,
+                                        paymentType,
+                                        payerMobile,
+                                        paymentDesc,
+                                        payerID,
+                                        transactionRef,
+                                        transactionChannel,
+                                        transactionDate,
+                                        token,
+                                        checksum,
+                                        institutionID,
+                                        payementConfirmation.data.data.receipt
+                                )
+                        }
+                        res.status(payementConfirmation.status).json({
+                                data: JSON.parse(JSON.stringify(payementConfirmation.data))
+                        })
 
                 } else {
                         res.status(201).send({ message: "Le token n'existe pas" })
